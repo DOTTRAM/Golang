@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"Webserver/internal/handlers"
 	"Webserver/internal/models"
 	"context"
 
@@ -8,14 +9,22 @@ import (
 )
 
 type SellerRepository struct {
+	h *handlers.SellerHandler
 }
 
 func NewSellerRepository() *SellerRepository {
 	return &SellerRepository{}
 }
 
-func (h *SellerRepository) Create(ctx context.Context, id int, name string) (*models.Car, error) {
+var storage1 = make([]*models.Seller, 0)
 
+func (h *SellerRepository) Create(ctx context.Context, id int, name string) (*models.Seller, error) {
+	seller := models.Seller{
+		Id:   id,
+		Name: name,
+	}
+	storage1 = append(storage1, &seller)
+	return &seller, nil
 }
 
 func (h *SellerRepository) Update(c *gin.Context) {
