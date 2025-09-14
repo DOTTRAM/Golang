@@ -15,24 +15,20 @@ func main() {
 	var sellerRepo *repositories.SellerRepository
 	if sellerV == "1" {
 		sellerRepo = repositories.NewSellerRepository()
-	} else {
-		sellerRepo = repositories.NewSellerRepository2()
-	}
+
 
 	sellerSrv := services.NewSellerService(sellerRepo)
 	sellerHandler := handlers.NewSellerHandler(sellerSrv)
 
 	r := gin.Default()
 
-	{
-		r.GET("/ping", ping)
-	}
 
 	// models/cars
 	{
 		// CRUD
 		r.POST("/sellers", sellerHandler.Create)
 		r.GET("/sellers", sellerHandler.GetAll)
+		r.GET("/sellers", sellerHandler.GetByID)
 		r.PATCH("/sellers/:id", sellerHandler.Update)
 		r.DELETE("/sellers/:id/", sellerHandler.Delete)
 		// CRUD

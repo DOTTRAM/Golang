@@ -1,53 +1,94 @@
 package repositories
 
 import (
-	"Webserver/internal/handlers"
 	"Webserver/internal/models"
 	"context"
-
-	"github.com/gin-gonic/gin"
+	"errors"
+	"strconv"
 )
 
 type SellerRepository struct {
-	h *handlers.SellerHandler
+	// Убрать зависимость от handlers!
+	storage []*models.Seller
 }
 
 func NewSellerRepository() *SellerRepository {
-	return &SellerRepository{}
+	return &SellerRepository{
+		storage: make([]*models.Seller, 0),
+	}
 }
 
-var storage1 = make([]*models.Seller, 0)
-
-func (h *SellerRepository) Create(ctx context.Context, id int, name string) (*models.Seller, error) {
-	seller := models.Seller{
+func (r *SellerRepository) Create(ctx context.Context, id int, name string) (*models.Seller, error) {
+	seller := &models.Seller{
 		Id:   id,
 		Name: name,
 	}
-	storage1 = append(storage1, &seller)
-	return &seller, nil
+
+	r.storage = append(r.storage, seller)
+	return seller, nil
 }
 
-func (h *SellerRepository) Update(c *gin.Context) {
+func (r *SellerRepository) GetByID(ctx context.Context, id string) (*models.Seller, error) {
+	// Конвертируем string ID в int
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, errors.New("invalid ID format")
+	}
 
+	for _, seller := range r.storage {
+		if seller.Id == intID {
+			return seller, nil
+		}
+	}
+
+	return nil, nil // Seller not found
 }
 
-func (h *SellerRepository) Delete(c *gin.Context) error {
-
-	return nil
+func (r *SellerRepository) GetAll(ctx context.Context) ([]*models.Seller, error) {
+	if len(r.storage) == 0 {
+		return nil, errors.New("no sellers found")
+	}
+	return r.storage, nil
 }
 
-func (h *SellerRepository) SearchbyId(c *gin.Context) {
+func (r *SellerRepository) Update(ctx context.Context, seller *models.Seller) error {
+	if seller == nil {
+		return errors.New("seller cannot be nil")
+	}
 
+	for i, existingSeller := range r.storage {
+		if existingSeller.Id == seller.Id {
+			r.storage[i] = seller // Обновляем продавца
+			return nil
+		}
+	}
+
+	return errors.New("seller not found")
 }
 
-func (h *SellerRepository) SearchAll(c *gin.Context) {
+func (r *SellerRepository) Delete(ctx context.Context, id string) error {
+	// Конвертируем string ID в int
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		return errors.New("invalid ID format")
+	}
 
+	for i, seller := range r.storage {
+		if seller.Id == intID {
+			// Удаляем элемент из slice
+			r.storage = append(r.storage[:i], r.storage[i+1:]...)
+			return nil
+		}
+	}
+
+	return errors.New("seller not found")
 }
 
-func (h *SellerRepository) GetByID(ctx context.Context, id string) (interface{}, interface{}) {
-
+// Дополнительные методы для обратной совместимости
+func (r *SellerRepository) SearchbyId(ctx context.Context, id string) (*models.Seller, error) {
+	return r.GetByID(ctx, id)
 }
 
-func (h *SellerRepository) GetAll(ctx context.Context) (interface{}, interface{}) {
-
+func (r *SellerRepository) SearchAll(ctx context.Context) ([]*models.Seller, error) {
+	return r.GetAll(ctx)
 }

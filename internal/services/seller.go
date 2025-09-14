@@ -31,12 +31,12 @@ func (s *SellerService) Create(ctx context.Context, name string) (*models.Seller
 
 	// Сохраняем в репозитории
 	id := rand.Int()
-	err := s.repo.Create(id, name)
+	seller, err := s.repo.Create(ctx, id, name)
 	if err != nil {
 		return nil, err
 	}
 
-	return err, nil
+	return seller, nil
 }
 
 func (s *SellerService) GetByID(ctx context.Context, id string) (*models.Seller, error) {
@@ -60,7 +60,7 @@ func (s *SellerService) GetByID(ctx context.Context, id string) (*models.Seller,
 func (s *SellerService) GetAll(ctx context.Context) ([]*models.Seller, error) {
 	sellers, err := s.repo.GetAll(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("Введено пустое значение")
 	}
 
 	return sellers, nil
@@ -112,7 +112,6 @@ func (s *SellerService) Delete(ctx context.Context, id string) error {
 	if existingSeller == nil {
 		return errors.New("seller not found")
 	}
-
 	// Удаляем
-	return s.repo.Delete(id, ctx)
+	return s.repo.Delete(ctx, id)
 }
