@@ -1,15 +1,15 @@
 package repositories
 
 import (
-	"Webserver/internal/models"
+	"Webserver/internal/domain"
 	"context"
 	"fmt"
 )
 
-var storage = make([]*models.Car, 0)
+var storage = make([]*domain.Car, 0)
 
-func Create(id int, name string) *models.Car {
-	car := models.Car{
+func Create(id int, name string) *domain.Car {
+	car := domain.Car{
 		Id:   id,
 		Name: name,
 	}
@@ -19,12 +19,12 @@ func Create(id int, name string) *models.Car {
 
 }
 
-func GetAll(ctx context.Context) ([]*models.Car, error) {
+func GetAll(ctx context.Context) ([]*domain.Car, error) {
 	return storage, nil
 }
 
-func GetById(ctx context.Context, id int) (*models.Car, error) {
-	var car *models.Car
+func GetById(ctx context.Context, id int) (*domain.Car, error) {
+	var car *domain.Car
 
 	for _, storagedCar := range storage {
 		if id == storagedCar.Id {
@@ -35,7 +35,7 @@ func GetById(ctx context.Context, id int) (*models.Car, error) {
 	return car, nil
 }
 
-func Update(ctx context.Context, car *models.Car) error {
+func Update(ctx context.Context, car *domain.Car) error {
 	for i, m := range storage {
 		if car.Id == m.Id {
 			storage[i] = car
@@ -44,7 +44,7 @@ func Update(ctx context.Context, car *models.Car) error {
 	return nil
 }
 
-func Delete(ctx context.Context, id int) (*models.Car, error) {
+func Delete(ctx context.Context, id int) (*domain.Car, error) {
 
 	originalLength := len(storage)
 

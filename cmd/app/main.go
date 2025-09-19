@@ -1,53 +1,73 @@
 package main
 
 import (
+	"Webserver/internal/config"
+	"Webserver/internal/database"
 	"Webserver/internal/handlers"
 	"Webserver/internal/repositories"
 	"Webserver/internal/services"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	sellerV := os.Getenv("SELLER_PROVIDER_VERSION")
+
+	// 1. Ввести грамотную работу с переменными
+	cfg, err := config.Load()
+	if err != nil {
+		panic(err)
+	}
 	var sellerRepo *repositories.SellerRepository
-	if sellerV == "1" {
-		sellerRepo = repositories.NewSellerRepository()
 
+	// 2. Подключить  постргре 16
+	db, err := database.Connect(cfg)
+	if err != nil {
+		panic(err)
+	}
 
+	// 3. Подключить сущности к орм - gorm
+
+	sellerRepo = repositories.NewSellerRepository(db)
 	sellerSrv := services.NewSellerService(sellerRepo)
 	sellerHandler := handlers.NewSellerHandler(sellerSrv)
 
 	r := gin.Default()
 
+	// Добавляем ping endpoint
+	r.GET("/ping", ping)
 
-	// models/cars
+	// sellers routes
+	sellerRoutes := r.Group("/sellers")
 	{
 		// CRUD
-		r.POST("/sellers", sellerHandler.Create)
-		r.GET("/sellers", sellerHandler.GetAll)
-		r.GET("/sellers", sellerHandler.GetByID)
-		r.PATCH("/sellers/:id", sellerHandler.Update)
-		r.DELETE("/sellers/:id/", sellerHandler.Delete)
-		// CRUD
-
+		sellerRoutes.POST("", sellerHandler.Create)
+		sellerRoutes.GET("", sellerHandler.GetAll)      // Все продавцы
+		sellerRoutes.GET("/:id", sellerHandler.GetByID) // Конкретный продавец
+		sellerRoutes.PATCH("/:id", sellerHandler.Update)
+		sellerRoutes.DELETE("/:id", sellerHandler.Delete)
 	}
 
-	// models/cars
+	// cars routes - нужно создать соответствующие handlers!
+	carRoutes := r.Group("/cars")
 	{
 		// CRUD
-
-		r.POST("/cars", handlers.Create)
-		r.GET("/cars", handlers.GetAll)
-		r.PATCH("/cars/:id", handlers.Update)
-		r.DELETE("/cars/:id/", handlers.Delete)
-		// CRUD
-
+		// Временные заглушки - нужно реализовать handlers для cars
+		carRoutes.POST("", func(c *gin.Context) {
+			c.JSON(http.StatusNotImplemented, gin.H{"error": "Not implemented"})
+		})
+		carRoutes.GET("", func(c *gin.Context) {
+			c.JSON(http.StatusNotImplemented, gin.H{"error": "Not implemented"})
+		})
+		carRoutes.PATCH("/:id", func(c *gin.Context) {
+			c.JSON(http.StatusNotImplemented, gin.H{"error": "Not implemented"})
+		})
+		carRoutes.DELETE("/:id", func(c *gin.Context) {
+			c.JSON(http.StatusNotImplemented, gin.H{"error": "Not implemented"})
+		})
 	}
 
-	r.Run()
+	r.Run(":" + cfg.HTTPort)
 }
 
 func ping(c *gin.Context) {

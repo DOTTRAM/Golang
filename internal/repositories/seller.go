@@ -1,94 +1,79 @@
 package repositories
 
 import (
-	"Webserver/internal/models"
+	"Webserver/internal/database"
+	"Webserver/internal/domain"
 	"context"
 	"errors"
-	"strconv"
+
+	"gorm.io/gorm"
 )
 
 type SellerRepository struct {
-	// Убрать зависимость от handlers!
-	storage []*models.Seller
+	db *database.Database
 }
 
-func NewSellerRepository() *SellerRepository {
-	return &SellerRepository{
-		storage: make([]*models.Seller, 0),
-	}
+func NewSellerRepository(db *database.Database) *SellerRepository {
+	return &SellerRepository{db: db}
 }
 
-func (r *SellerRepository) Create(ctx context.Context, id int, name string) (*models.Seller, error) {
-	seller := &models.Seller{
-		Id:   id,
-		Name: name,
+func (r *SellerRepository) Create(ctx context.Context, seller *domain.Seller) (*domain.Seller, error) {
+	result := r.db.DB.WithContext(ctx).Create(seller)
+	if result.Error != nil {
+		return nil, result.Error
 	}
-
-	r.storage = append(r.storage, seller)
 	return seller, nil
 }
 
-func (r *SellerRepository) GetByID(ctx context.Context, id string) (*models.Seller, error) {
-	// Конвертируем string ID в int
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, errors.New("invalid ID format")
-	}
-
-	for _, seller := range r.storage {
-		if seller.Id == intID {
-			return seller, nil
+func (r *SellerRepository) GetByID(ctx context.Context, id string) (*domain.Seller, error) {
+	var seller domain.Seller
+	result := r.db.DB.WithContext(ctx).First(&seller, id)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, errors.New("seller not found")
 		}
+		return nil, result.Error
 	}
-
-	return nil, nil // Seller not found
+	return &seller, nil
 }
 
-func (r *SellerRepository) GetAll(ctx context.Context) ([]*models.Seller, error) {
-	if len(r.storage) == 0 {
+func (r *SellerRepository) GetAll(ctx context.Context) ([]*domain.Seller, error) {
+	var sellers []*domain.Seller
+	result := r.db.DB.WithContext(ctx).Find(&sellers)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if len(sellers) == 0 {
 		return nil, errors.New("no sellers found")
 	}
-	return r.storage, nil
+	return sellers, nil
 }
 
-func (r *SellerRepository) Update(ctx context.Context, seller *models.Seller) error {
-	if seller == nil {
-		return errors.New("seller cannot be nil")
+func (r *SellerRepository) Update(ctx context.Context, seller *domain.Seller) error {
+	result := r.db.DB.WithContext(ctx).Save(seller)
+	if result.Error != nil {
+		return result.Error
 	}
-
-	for i, existingSeller := range r.storage {
-		if existingSeller.Id == seller.Id {
-			r.storage[i] = seller // Обновляем продавца
-			return nil
-		}
-	}
-
-	return errors.New("seller not found")
+	return nil
 }
 
 func (r *SellerRepository) Delete(ctx context.Context, id string) error {
-	// Конвертируем string ID в int
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		return errors.New("invalid ID format")
+	result := r.db.DB.WithContext(ctx).Delete(&domain.Seller{}, id)
+	if result.Error != nil {
+		return result.Error
 	}
-
-	for i, seller := range r.storage {
-		if seller.Id == intID {
-			// Удаляем элемент из slice
-			r.storage = append(r.storage[:i], r.storage[i+1:]...)
-			return nil
-		}
+	if result.RowsAffected == 0 {
+		return errors.New("seller not found")
 	}
-
-	return errors.New("seller not found")
+	return nil
 }
 
 // Дополнительные методы для обратной совместимости
-func (r *SellerRepository) SearchbyId(ctx context.Context, id string) (*models.Seller, error) {
+func (r *SellerRepository) SearchbyId(ctx context.Context, id string) (*domain.Seller, error) {
 	return r.GetByID(ctx, id)
 }
 
-func (r *SellerRepository) SearchAll(ctx context.Context) ([]*models.Seller, error) {
+func (r *SellerRepository) SearchAll(ctx context.Context) ([]*domain.Seller, error) {
 	return r.GetAll(ctx)
 }

@@ -1,7 +1,7 @@
 package services
 
 import (
-	"Webserver/internal/models"
+	"Webserver/internal/domain"
 	"Webserver/internal/repositories"
 	"context"
 	"errors"
@@ -12,7 +12,7 @@ import (
 
 // Бизнес Логика
 
-func Create(ctx context.Context, name string) (*models.Car, error) {
+func Create(ctx context.Context, name string) (*domain.Car, error) {
 	if name == "Chery" {
 		fmt.Println("Бюджетные машины")
 		return nil, errors.New("Не в этой категории автомобилей")
@@ -30,7 +30,7 @@ func Create(ctx context.Context, name string) (*models.Car, error) {
 
 }
 
-func GetAll(ctx context.Context) ([]*models.Car, error) {
+func GetAll(ctx context.Context) ([]*domain.Car, error) {
 	cars, err := repositories.GetAll(ctx)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func GetAll(ctx context.Context) ([]*models.Car, error) {
 	return cars, nil
 }
 
-func GetById(ctx context.Context, id int) (*models.Car, error) {
+func GetById(ctx context.Context, id int) (*domain.Car, error) {
 	car, err := repositories.GetById(ctx, id)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func GetById(ctx context.Context, id int) (*models.Car, error) {
 	return car, nil
 }
 
-func Update(ctx context.Context, id int, name *string, price *int) (*models.Car, error) {
+func Update(ctx context.Context, id int, name *string, price *int) (*domain.Car, error) {
 	currentCar, _ := GetById(ctx, id)
 
 	if name != nil {
@@ -62,7 +62,7 @@ func Update(ctx context.Context, id int, name *string, price *int) (*models.Car,
 	return currentCar, nil
 }
 
-func SetYear(ctx context.Context, id int, year int) (*models.Car, error) {
+func SetYear(ctx context.Context, id int, year int) (*domain.Car, error) {
 	if year < 0 {
 		return nil, errors.New("че ты пишешь")
 	}
@@ -83,7 +83,7 @@ func SetYear(ctx context.Context, id int, year int) (*models.Car, error) {
 	return currentCar, nil
 }
 
-func Delete(ctx context.Context, id int) (*models.Car, error) {
+func Delete(ctx context.Context, id int) (*domain.Car, error) {
 	car, err := repositories.Delete(ctx, id)
 	if err != nil {
 		return nil, err
